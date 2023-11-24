@@ -105,7 +105,7 @@ class RenameHelper {
                 .also { it.createNewFile() }.apply {
                     Files.writeString(
                         this.toPath(),
-                        GsonBuilder().setPrettyPrinting().create().toJson(json),
+                        GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create().toJson(json),
                         StandardOpenOption.TRUNCATE_EXISTING
                     )
                 }
