@@ -16,7 +16,7 @@ class ItemHelper {
                 println("物品名称 -> ${getTranslationName(id)}")
                 print("重命名物品 ID -> ")
                 val new = scanner.next()
-                RenameHelper.writeLang("item.primogemcraft.$new", getTranslationName(id))
+                RenameHelper.writeLang("item.primogemcraft.$new", id)
                 RenameHelper.writeItemModel(id, new, scanner)
             } catch (e: Exception) {
                 println("没有该物品或发生了错误 $e")

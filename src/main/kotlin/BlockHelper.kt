@@ -27,7 +27,7 @@ class BlockHelper {
                 println("方块名称 -> ${getTranslationName(id)}")
                 print("重命名方块 ID -> ")
                 val new = scanner.next()
-                RenameHelper.writeLang("block.primogemcraft.$new", getTranslationName(id))
+                RenameHelper.writeLang("block.primogemcraft.$new", id)
                 RenameHelper.writeBlockstates(id, new, scanner)
             } catch (e: Exception) {
                 println("没有该方块或发生了错误 $e")

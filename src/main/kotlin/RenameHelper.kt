@@ -1,3 +1,5 @@
+import TranslateHelper.Companion.getEnglishName
+import TranslateHelper.Companion.getTranslationName
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.io.File
@@ -12,9 +14,14 @@ class RenameHelper {
     }
 
     companion object {
-        fun writeLang(key: String, value: String) {
+        fun writeLang(key: String, id: String) {
+            val chs = getTranslationName(id)
+            val eng = getEnglishName(id)
             val path = File("${DevTools.output}/src/main/resources/assets/primogemcraft/lang/zh_cn.json").toPath()
+            val pathEn = File("${DevTools.output}/src/main/resources/assets/primogemcraft/lang/zh_cn.json").toPath()
             val lang = Gson().fromJson(Files.readString(path), Map::class.java)
+                .map { Pair(it.key.toString(), it.value.toString()) } as ArrayList
+            val langEn = Gson().fromJson(Files.readString(pathEn), Map::class.java)
                 .map { Pair(it.key.toString(), it.value.toString()) } as ArrayList
             val prefix = key.substringBefore('.')
             var flag = false
@@ -22,14 +29,24 @@ class RenameHelper {
                 if (it.first.startsWith("$prefix.")) {
                     flag = true
                 } else if (flag) {
-                    lang.add(lang.indexOf(it), Pair(key, value))
+                    val ind = lang.indexOf(it)
+                    lang.add(ind, Pair(key, chs))
+                    langEn.add(ind, Pair(key, eng))
                     break
                 }
             }
-            if (!flag) lang.add(Pair(key, value))
+            if (!flag) {
+                lang.add(Pair(key, chs))
+                langEn.add(Pair(key, eng))
+            }
             Files.writeString(
                 path,
                 GsonBuilder().setPrettyPrinting().create().toJson(lang.toMap()),
+                StandardOpenOption.TRUNCATE_EXISTING
+            )
+            Files.writeString(
+                pathEn,
+                GsonBuilder().setPrettyPrinting().create().toJson(langEn.toMap()),
                 StandardOpenOption.TRUNCATE_EXISTING
             )
         }
@@ -49,13 +66,42 @@ class RenameHelper {
             writeAsset("models/item/${new}.json", model)
         }
 
-        @Suppress("UNCHECKED_CAST")
         fun writeBlockstates(id: String, new: String, scanner: Scanner) {
             val states = Gson().fromJson(
                 Files.readString(File("${DevTools.basedir}/src/main/resources/assets/primogemcraft/blockstates/$id.json").toPath()),
                 Map::class.java
             ).toMutableMap()
             println("方块状态 -> $states")
+            processVariants(states, scanner)
+            processMultipart(states, scanner)
+            writeAsset("blockstates/$new.json", states)
+            if (File("${DevTools.basedir}/src/main/resources/assets/primogemcraft/models/item/$id.json").exists()) {
+                writeItemModel(id, new, scanner)
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun processMultipart(states: MutableMap<Any?, Any?>, scanner: Scanner) {
+            if (!states.contains("multipart")) return
+            val multipart = states["multipart"] as List<Map<*, *>>
+            for (it in multipart) {
+                val apply = it["apply"] as MutableMap<String, String>
+                println("条件when{${it["when"]}}模型 -> ${apply["model"]}")
+            }
+            for (it in multipart) {
+                val apply = it["apply"] as MutableMap<String, String>
+                val model = apply["model"]
+                println("重命名模型 (when{${it["when"]}} $ ${model}): ")
+                print("-> ")
+                val nm = scanner.next()
+                apply["model"] = "primogemcraft:block/$nm"
+                writeBlockModel(model.toString().substringAfter('/'), nm, scanner)
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun processVariants(states: MutableMap<Any?, Any?>, scanner: Scanner) {
+            if (!states.contains("variants")) return
             for ((key, variant) in states["variants"] as Map<*, *>) {
                 if (variant is Map<*, *>) {
                     val model = variant["model"]
@@ -71,10 +117,6 @@ class RenameHelper {
                         "primogemcraft:block/$nm"
                     writeBlockModel(model.toString().substringAfter('/'), nm, scanner)
                 }
-            }
-            writeAsset("blockstates/$new.json", states)
-            if (File("${DevTools.basedir}/src/main/resources/assets/primogemcraft/models/item/$id.json").exists()) {
-                writeItemModel(id, new, scanner)
             }
         }
 
