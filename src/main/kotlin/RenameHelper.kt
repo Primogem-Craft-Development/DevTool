@@ -14,10 +14,23 @@ class RenameHelper {
     companion object {
         fun writeLang(key: String, value: String) {
             val path = File("${DevTools.output}/src/main/resources/assets/primogemcraft/lang/zh_cn.json").toPath()
-            val lang =
-                Gson().fromJson(Files.readString(path), MutableMap::class.java).toMutableMap().also { it[key] = value }
+            val lang = Gson().fromJson(Files.readString(path), Map::class.java)
+                .map { Pair(it.key.toString(), it.value.toString()) } as ArrayList
+            val prefix = key.substringBefore('.')
+            var flag = false
+            for (it in lang) {
+                if (it.first.startsWith("$prefix.")) {
+                    flag = true
+                } else if (flag) {
+                    lang.add(lang.indexOf(it), Pair(key, value))
+                    break
+                }
+            }
+            if (!flag) lang.add(Pair(key, value))
             Files.writeString(
-                path, GsonBuilder().setPrettyPrinting().create().toJson(lang), StandardOpenOption.TRUNCATE_EXISTING
+                path,
+                GsonBuilder().setPrettyPrinting().create().toJson(lang.toMap()),
+                StandardOpenOption.TRUNCATE_EXISTING
             )
         }
 
