@@ -61,7 +61,7 @@ class RenameHelper {
                 return
             }
             println("物品模型 -> $model")
-            mh ?: ModelHelper(scanner, TextureType.ITEM).renameTextures(model)
+            (mh ?: ModelHelper(scanner, TextureType.ITEM)).renameTextures(model)
             writeAsset("models/item/${new}.json", model)
         }
 
@@ -94,15 +94,17 @@ class RenameHelper {
             }
             for (it in multipart) {
                 val apply = it["apply"] as MutableMap<String, String>
-                val model = apply["model"]
+                val model = apply["model"] as String
                 if (!modelMap.containsKey(model)) {
                     println("重命名模型 (when{${it["when"]}} $ ${model}): ")
                     print("-> ")
-                    modelMap[model!!] = scanner.next()
+                    val nm = scanner.next()
+                    modelMap[model] = nm
+                    apply["model"] = "primogemcraft:block/$nm"
+                    writeBlockModel(model.substringAfter('/'), nm, mh)
+                    continue
                 }
-                val nm = modelMap[model]!!
-                apply["model"] = "primogemcraft:block/$nm"
-                writeBlockModel(model.toString().substringAfter('/'), nm, mh)
+                apply["model"] = "primogemcraft:block/${modelMap[model]}"
             }
         }
 
@@ -117,18 +119,19 @@ class RenameHelper {
                     println("状态${key}模型 -> $model")
                 }
             }
-            for ((key, variant) in states["variants"] as Map<*, *>) {
-                if (variant is Map<*, *>) {
-                    val model = variant["model"]
-                    if (!modelMap.containsKey(model)) {
-                        print("重命名模型 (${if (key == "") "default" else key} $ ${model}) -> ")
-                        modelMap[model.toString()] = scanner.next()
-                    }
-                    val nm = modelMap[model]!!
-                    ((states["variants"] as MutableMap<*, *>)[key] as MutableMap<String, String>)["model"] =
-                        "primogemcraft:block/$nm"
-                    writeBlockModel(model.toString().substringAfter('/'), nm, mh)
+            for (it in states["variants"] as Map<*, *>) {
+                val key = it.key
+                val variant = it.value as MutableMap<String, String>
+                val model = variant["model"] as String
+                if (!modelMap.containsKey(model)) {
+                    print("重命名模型 (${if (key == "") "default" else key} $ ${model}) -> ")
+                    val nm = scanner.next()
+                    modelMap[model] = nm
+                    variant["model"] = "primogemcraft:block/$nm"
+                    writeBlockModel(model.substringAfter('/'), nm, mh)
+                    continue
                 }
+                variant["model"] = "primogemcraft:block/${modelMap[model]}"
             }
         }
 
