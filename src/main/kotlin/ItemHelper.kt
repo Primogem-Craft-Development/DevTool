@@ -1,3 +1,4 @@
+import TranslateHelper.Companion.getEnglishName
 import TranslateHelper.Companion.getTranslationName
 import java.io.File
 import java.util.*
@@ -13,7 +14,7 @@ class ItemHelper {
         fun renameItem(scanner: Scanner) {
             try {
                 val id = scanner.next()
-                println("物品名称 -> ${getTranslationName(id)}")
+                println("物品名称 -> ${getTranslationName(id)}(${getEnglishName(id)})")
                 print("重命名物品 ID -> ")
                 val new = scanner.next()
                 RenameHelper.writeLang("item.primogemcraft.$new", id)

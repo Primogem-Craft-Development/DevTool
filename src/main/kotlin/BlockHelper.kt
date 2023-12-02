@@ -1,3 +1,4 @@
+import TranslateHelper.Companion.getEnglishName
 import TranslateHelper.Companion.getTranslationName
 import java.io.File
 import java.util.*
@@ -24,7 +25,7 @@ class BlockHelper {
         fun renameBlock(scanner: Scanner) {
             try {
                 val id = scanner.next()
-                println("方块名称 -> ${getTranslationName(id)}")
+                println("方块名称 -> ${getTranslationName(id)}(${getEnglishName(id)})")
                 print("重命名方块 ID -> ")
                 val new = scanner.next()
                 RenameHelper.writeLang("block.primogemcraft.$new", id)
